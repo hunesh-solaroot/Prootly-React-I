@@ -1,0 +1,62 @@
+I need to modify my existing React component "new project" to fetch data from API and add advanced table features while maintaining exact styling from provided screenshots.
+
+## API Integration:
+- Endpoint: http://localhost:8000/api/new-projects-data/
+- Method: GET
+- Response: JSON with "status" and "projects" array
+
+## Component Structure (Already Exists):
+- Main: "new project" component
+- Child components: Header, TableHeader, Table
+- Add API integration + new features to existing structure
+
+## Complete Feature Implementation:
+
+### 1. EXACT STYLING (Pixel Perfect Match):
+```javascript
+// Theme styles EXACTLY matching screenshots
+const themeStyles = {
+  dark: {
+    background: '#1a1a1a',           // Main background from screenshot
+    cardBackground: '#1f1f1f',       // Table rows from screenshot
+    headerBackground: '#2a2a2a',     // Header from screenshot
+    textPrimary: '#ffffff',          // White text from screenshot
+    textSecondary: '#9ca3af',        // Gray text from screenshot
+    border: '#333333',               // Border color from screenshot
+    hoverBackground: '#2a2a2a',      // Row hover from screenshot
+    plansetButton: '#ffd700',        // Yellow button from screenshot
+    filterButton: '#10b981',         // Green filter from screenshot
+    searchBackground: '#2a2a2a',     // Search input from screenshot
+    searchBorder: '#404040'          // Search border from screenshot
+  },
+  light: {
+    background: '#ffffff',           // Light main background
+    cardBackground: '#ffffff',       // Light table rows
+    headerBackground: '#f8f9fa',     // Light header
+    textPrimary: '#1a1a1a',         // Dark text
+    textSecondary: '#6b7280',       // Gray text
+    border: '#e5e7eb',              // Light border
+    hoverBackground: '#f9fafb',     // Light row hover
+    plansetButton: '#ffd700',        // Same yellow button
+    filterButton: '#10b981',         // Same green filter
+    searchBackground: '#ffffff',     // White search input
+    searchBorder: '#d1d5db'         // Light search border
+  }
+};
+
+// Status badge colors EXACTLY from screenshot
+const statusColors = {
+  'In Progress': '#3b82f6',         // Exact blue from screenshot
+  'Ready for Design': '#06b6d4'     // Exact teal from screenshot
+};
+
+// Priority badge colors EXACTLY from screenshot
+const priorityColors = {
+  'High': '#ef4444'                 // Exact red from screenshot
+};
+
+// Avatar colors EXACTLY from screenshot
+const avatarColors = [
+  '#4ecdc4', '#ff6b6b', '#45b7d1', '#f9ca24', 
+  '#6c5ce7', '#fd79a8', '#00b894', '#fdcb6e'
+];

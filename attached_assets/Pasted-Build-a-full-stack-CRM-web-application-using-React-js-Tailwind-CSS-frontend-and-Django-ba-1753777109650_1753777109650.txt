@@ -1,0 +1,88 @@
+Build a full-stack CRM web application using **React.js + Tailwind CSS (frontend)** and **Django (backend)**. The app is designed for a **renewable energy company**. The dashboard and sidebar layout should replicate the attached screenshots. The design should follow a **green and yellow gradient theme** to reflect sustainability.
+
+## 🌱 Features & Structure
+
+### 🔗 Tech Stack:
+- Frontend: React.js, Tailwind CSS
+- Routing: react-router-dom
+- Backend: Django (Django REST Framework for APIs)
+- Communication: JSON REST APIs between frontend and backend
+
+---
+
+## 📂 Sidebar Sections:
+1. Dashboard
+2. Employees
+3. Clients
+4. Design
+5. Teams
+6. Garage
+7. Members
+8. Settings
+
+Use a modern sidebar design with icons (Lucide/HeroIcons), active highlights, and hover effects — inspired by the screenshots.
+
+---
+
+## 📊 Dashboard Page:
+- Display total projects (with cards):
+  - Completed Projects
+  - Hold Projects
+  - New Projects
+  - Revision Projects
+- Show percentage stats on each card.
+- Include a “Latest Offers” banner (size: 900x300 px).
+- Show recent comments feed with user, comment text, and timestamp.
+
+---
+
+## 👤 Employees Module:
+- Backend (Django):
+  - Model for Employee (name, email, role, status, profileImage, etc.)
+  - CRUD API endpoints
+- Frontend (React):
+  - Fetch data from Django API
+  - CRUD operations with modals/forms
+  - Search filter by name/email
+  - Toggle view: List & Grid
+
+---
+
+## 🤝 Clients Module:
+- Similar to Employees module
+- Client Model (companyName, contactPerson, email, phone, status, notes)
+- CRUD + Search + View Toggle (Grid/List)
+
+---
+
+## ✍️ Other Pages:
+- "Design", "Teams", "Garage", "Members", "Settings"
+- Placeholder pages with headers and consistent layout
+- Optionally expandable with Django models/APIs later
+
+---
+
+## 🎨 UI/UX Theme:
+- Clean, professional, and green-energy themed
+- Use Tailwind's gradient utilities (green-yellow tone: `from-green-500 to-yellow-400`)
+- Dashboard header like the screenshot
+- Responsive and mobile-friendly design
+
+---
+
+## 🛠 Additional Features:
+- Top navigation with search, notification icon, profile dropdown
+- Invite team feature on dashboard
+- Theme toggle (light/dark)
+- Reusable React components (Card, Modal, SearchBar, ToggleView, etc.)
+
+---
+
+## 🔌 Integration:
+- Use Axios or Fetch in React to connect with Django backend
+- Use Django CORS headers to allow frontend communication
+- Keep frontend and backend in separate folders (`frontend/`, `backend/`)
+
+---
+
+Make sure the frontend and backend are well integrated with clean code, reusable components, and a modern layout. The final result should look professional, dynamic, and easily extendable.

@@ -1,0 +1,63 @@
+I need to modify my existing React component "new project" to fetch data from API and display it. The component structure is already set up with separate components.
+
+## API Details:
+- API Endpoint: http://localhost:8000/api/new-projects-data/
+- Method: GET
+- Response format: JSON with "status" and "projects" array
+
+## Component Structure (Already Exists):
+- Main component: "new project"
+- Separate components for: Table, TableHeader, Header
+- Need to integrate API data with existing component structure
+
+## Styling Reference:
+**IMPORTANT: Use the exact styling from the provided screenshots/images**
+- Dark background theme (#1a1a1a)
+- Header with yellow "Planset" button and search bar
+- Table columns: CUSTOMER DETAILS, PROJECT DETAILS, KEY DATES, STATUS, ASSIGNED TO, COUNTDOWN, ACTIONS
+- Avatar circles with colored backgrounds and initials
+- Status badges: Blue for "IN PROGRESS", Teal for "READY FOR DESIGN"
+- Priority badges: Red background for "HIGH"
+- Action buttons: Green "Edit", Blue "Activity", Gray "More" (⋯)
+- Grid layout with proper spacing and hover effects
+- Typography and colors exactly matching the reference images
+
+## Code to Add in "new project" component:
+
+```javascript
+import { useState, useEffect } from 'react';
+
+// Add these state variables
+const [projects, setProjects] = useState([]);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState(null);
+
+// Add this useEffect for data fetching
+useEffect(() => {
+  fetchProjectsData();
+}, []);
+
+// Add this fetch function
+const fetchProjectsData = async () => {
+  try {
+    setLoading(true);
+    const response = await fetch('http://localhost:8000/api/new-projects-data/');
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.status === 'success') {
+      setProjects(data.projects);
+    } else {
+      setError('Failed to fetch projects data');
+    }
+  } catch (err) {
+    setError(err.message);
+    console.error('Error fetching projects:', err);
+  } finally {
+    setLoading(false);
+  }
+};

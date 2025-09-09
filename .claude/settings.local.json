@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__ide__getDiagnostics",
+      "Bash(npm run build:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run:*)",
+      "Bash(npx tsc:*)",
+      "Bash(rm:*)",
+      "Bash(npx eslint:*)",
+      "Bash(grep:*)",
+      "Bash(sed:*)",
+      "Bash(claude doctor)",
+      "Bash(python3:*)",
+      "Bash(pip install:*)",
+      "Bash(curl:*)"
+    ],
+    "deny": [],
+    "defaultMode": "acceptEdits"
+  }
+}
