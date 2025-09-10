@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 // Declare global Google Maps types
 declare global {
   interface Window {
     google: any;
     googleMapsLoaded?: boolean;
+    initGoogleMaps?: () => void;
   }
 }
 
@@ -16,81 +17,91 @@ interface GoogleMapProps {
 }
 
 export function GoogleMap({ address, coordinates, onLocationSelect, height = '400px' }: GoogleMapProps) {
-  const mapRef = useRef<HTMLDivElement>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markerRef = useRef<any>(null);
-  const scriptRef = useRef<HTMLScriptElement | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [mapKey, setMapKey] = useState(0); // Force re-render key
 
-  // Cleanup function
-  const cleanup = () => {
-    if (markerRef.current) {
-      try {
+  // Safe cleanup function
+  const safeCleanup = useCallback(() => {
+    try {
+      if (markerRef.current) {
         markerRef.current.setMap(null);
         markerRef.current = null;
-      } catch (error) {
-        // Ignore cleanup errors
       }
+    } catch (error) {
+      // Silently ignore marker cleanup errors
     }
-    if (mapInstanceRef.current) {
-      try {
+    
+    try {
+      if (mapInstanceRef.current) {
         mapInstanceRef.current = null;
-      } catch (error) {
-        // Ignore cleanup errors
       }
+    } catch (error) {
+      // Silently ignore map cleanup errors
     }
-  };
+  }, []);
 
   // Initialize Google Maps
-  useEffect(() => {
-    const initGoogleMaps = () => {
-      try {
-        if (window.google && mapRef.current) {
-          const defaultLocation = { lat: 39.8283, lng: -98.5795 }; // Center of US
-          
-          mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
-            zoom: 10,
-            center: defaultLocation,
-            mapTypeControl: true,
-            streetViewControl: true,
-            fullscreenControl: true,
-          });
+  const initializeMap = useCallback(() => {
+    if (!window.google || !mapContainerRef.current) {
+      return;
+    }
 
-          // Add click listener
-          mapInstanceRef.current.addListener('click', (e: any) => {
-            if (e.latLng && onLocationSelect) {
-              const lat = e.latLng.lat();
-              const lng = e.latLng.lng();
-              const coordinatesStr = `${lat.toFixed(6)},${lng.toFixed(6)}`;
-              
-              // Update marker
-              if (markerRef.current) {
-                try {
-                  markerRef.current.setMap(null);
-                } catch (error) {
-                  // Ignore marker cleanup errors
-                }
+    try {
+      // Clear any existing map first
+      safeCleanup();
+      
+      const defaultLocation = { lat: 39.8283, lng: -98.5795 }; // Center of US
+      
+      mapInstanceRef.current = new window.google.maps.Map(mapContainerRef.current, {
+        zoom: 10,
+        center: defaultLocation,
+        mapTypeControl: true,
+        streetViewControl: true,
+        fullscreenControl: true,
+        disableDefaultUI: false,
+      });
+
+      // Add click listener with proper error handling
+      const clickListener = mapInstanceRef.current.addListener('click', (e: any) => {
+        try {
+          if (e.latLng && onLocationSelect) {
+            const lat = e.latLng.lat();
+            const lng = e.latLng.lng();
+            const coordinatesStr = `${lat.toFixed(6)},${lng.toFixed(6)}`;
+            
+            // Safely remove existing marker
+            if (markerRef.current) {
+              try {
+                markerRef.current.setMap(null);
+              } catch (markerError) {
+                // Ignore marker removal errors
               }
-              
-              markerRef.current = new window.google.maps.Marker({
-                position: { lat, lng },
-                map: mapInstanceRef.current,
-                title: 'Selected Location'
-              });
+            }
+            
+            // Create new marker
+            markerRef.current = new window.google.maps.Marker({
+              position: { lat, lng },
+              map: mapInstanceRef.current,
+              title: 'Selected Location'
+            });
 
-              // Reverse geocode to get address
-              const geocoder = new window.google.maps.Geocoder();
-              geocoder.geocode({ location: { lat, lng } }, (results: any, status: any) => {
+            // Reverse geocode
+            const geocoder = new window.google.maps.Geocoder();
+            geocoder.geocode({ location: { lat, lng } }, (results: any, status: any) => {
+              try {
                 if (status === 'OK' && results && results[0] && onLocationSelect) {
                   const result = results[0];
-                  const components = result.address_components;
+                  const components = result.address_components || [];
                   
                   let city = '';
                   let state = '';
                   
                   for (const component of components) {
-                    const types = component.types;
+                    const types = component.types || [];
                     if (types.includes('locality')) {
                       city = component.long_name;
                     } else if (types.includes('administrative_area_level_1')) {
@@ -101,62 +112,84 @@ export function GoogleMap({ address, coordinates, onLocationSelect, height = '40
                   onLocationSelect({
                     lat,
                     lng,
-                    address: result.formatted_address,
+                    address: result.formatted_address || '',
                     city,
                     state,
                     coordinates: coordinatesStr
                   });
                 }
-              });
-            }
-          });
-
-          setIsLoaded(true);
-          setLoadError(false);
+              } catch (geocodeError) {
+                console.warn('Geocoding error:', geocodeError);
+              }
+            });
+          }
+        } catch (clickError) {
+          console.warn('Map click error:', clickError);
         }
-      } catch (error) {
-        console.error('Error initializing Google Maps:', error);
-        setLoadError(true);
-      }
-    };
+      });
 
-    // Load Google Maps API if not already loaded
-    if (!window.google && !window.googleMapsLoaded) {
-      window.googleMapsLoaded = true;
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyBDaeWicvigtP9xPv919E-RNoxfvC-Hqik&libraries=places&loading=async`;
-      script.async = true;
-      script.defer = true;
-      script.onload = initGoogleMaps;
-      script.onerror = () => {
-        setLoadError(true);
-        window.googleMapsLoaded = false;
-      };
-      scriptRef.current = script;
-      document.head.appendChild(script);
-    } else if (window.google) {
-      initGoogleMaps();
+      setIsLoaded(true);
+      setLoadError(false);
+    } catch (error) {
+      console.error('Error initializing Google Maps:', error);
+      setLoadError(true);
+    }
+  }, [onLocationSelect, safeCleanup]);
+
+  // Load Google Maps API
+  useEffect(() => {
+    if (window.google) {
+      initializeMap();
+      return;
     }
 
-    return cleanup;
-  }, [onLocationSelect]);
+    if (window.googleMapsLoaded) {
+      return; // Already loading
+    }
+
+    window.googleMapsLoaded = true;
+    
+    // Create global initialization function
+    window.initGoogleMaps = () => {
+      initializeMap();
+    };
+
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyAXnPCQ3OMrjqOZ2pHJJjETw-AtRZT6SLM&libraries=places&callback=initGoogleMaps`;
+    script.async = true;
+    script.defer = true;
+    script.onerror = () => {
+      setLoadError(true);
+      window.googleMapsLoaded = false;
+    };
+    
+    document.head.appendChild(script);
+
+    return () => {
+      // Don't remove script on cleanup as other components might use it
+    };
+  }, [initializeMap]);
 
   // Update map when address changes
   useEffect(() => {
-    if (isLoaded && mapInstanceRef.current && address && address.length > 10) {
-      try {
-        const geocoder = new window.google.maps.Geocoder();
-        geocoder.geocode({ address }, (results: any, status: any) => {
+    if (!isLoaded || !mapInstanceRef.current || !address || address.length <= 10) {
+      return;
+    }
+
+    try {
+      const geocoder = new window.google.maps.Geocoder();
+      geocoder.geocode({ address }, (results: any, status: any) => {
+        try {
           if (status === 'OK' && results && results[0] && mapInstanceRef.current) {
             const location = results[0].geometry.location;
             mapInstanceRef.current.setCenter(location);
             mapInstanceRef.current.setZoom(15);
             
-            // Update marker
+            // Safely update marker
             if (markerRef.current) {
               try {
                 markerRef.current.setMap(null);
-              } catch (error) {
+              } catch (markerError) {
                 // Ignore marker cleanup errors
               }
             }
@@ -167,51 +200,64 @@ export function GoogleMap({ address, coordinates, onLocationSelect, height = '40
               title: address
             });
           }
-        });
-      } catch (error) {
-        console.error('Error geocoding address:', error);
-      }
+        } catch (geocodeError) {
+          console.warn('Address geocoding error:', geocodeError);
+        }
+      });
+    } catch (error) {
+      console.warn('Error geocoding address:', error);
     }
   }, [address, isLoaded]);
 
   // Update map when coordinates change
   useEffect(() => {
-    if (isLoaded && mapInstanceRef.current && coordinates) {
-      try {
-        const [lat, lng] = coordinates.split(',').map(Number);
-        if (!isNaN(lat) && !isNaN(lng)) {
-          const position = { lat, lng };
-          mapInstanceRef.current.setCenter(position);
-          mapInstanceRef.current.setZoom(15);
-          
-          // Update marker
-          if (markerRef.current) {
-            try {
-              markerRef.current.setMap(null);
-            } catch (error) {
-              // Ignore marker cleanup errors
-            }
+    if (!isLoaded || !mapInstanceRef.current || !coordinates) {
+      return;
+    }
+
+    try {
+      const [lat, lng] = coordinates.split(',').map(Number);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        const position = { lat, lng };
+        mapInstanceRef.current.setCenter(position);
+        mapInstanceRef.current.setZoom(15);
+        
+        // Safely update marker
+        if (markerRef.current) {
+          try {
+            markerRef.current.setMap(null);
+          } catch (markerError) {
+            // Ignore marker cleanup errors
           }
-          
-          markerRef.current = new window.google.maps.Marker({
-            position,
-            map: mapInstanceRef.current,
-            title: 'Selected Location'
-          });
         }
-      } catch (error) {
-        console.error('Error updating coordinates:', error);
+        
+        markerRef.current = new window.google.maps.Marker({
+          position,
+          map: mapInstanceRef.current,
+          title: 'Selected Location'
+        });
       }
+    } catch (error) {
+      console.warn('Error updating coordinates:', error);
     }
   }, [coordinates, isLoaded]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      cleanup();
-      // Don't remove the script as it might be used by other components
+      safeCleanup();
     };
-  }, []);
+  }, [safeCleanup]);
+
+  // Force re-render if there are issues
+  const handleRetry = () => {
+    setMapKey(prev => prev + 1);
+    setIsLoaded(false);
+    setLoadError(false);
+    setTimeout(() => {
+      initializeMap();
+    }, 100);
+  };
 
   if (loadError) {
     return (
@@ -220,21 +266,28 @@ export function GoogleMap({ address, coordinates, onLocationSelect, height = '40
         className="rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center bg-gray-100 dark:bg-gray-700"
       >
         <div className="text-center">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Map temporarily unavailable</p>
-          <p className="text-xs text-gray-500 dark:text-gray-500">Click to select location manually</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Map temporarily unavailable</p>
+          <button 
+            onClick={handleRetry}
+            className="text-xs text-blue-600 hover:text-blue-800 underline"
+          >
+            Try again
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div 
-      ref={mapRef} 
-      style={{ height, width: '100%' }}
-      className="rounded-lg border border-gray-300 dark:border-gray-600"
-    >
+    <div className="relative" style={{ height, width: '100%' }}>
+      <div 
+        key={mapKey}
+        ref={mapContainerRef} 
+        style={{ height: '100%', width: '100%' }}
+        className="rounded-lg border border-gray-300 dark:border-gray-600"
+      />
       {!isLoaded && (
-        <div className="flex items-center justify-center h-full bg-gray-100 dark:bg-gray-700 rounded-lg">
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
             <p className="text-sm text-gray-600 dark:text-gray-400">Loading Google Maps...</p>
