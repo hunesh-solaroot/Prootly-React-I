@@ -59,6 +59,7 @@ export function GoogleMap({ address, coordinates, onLocationSelect, height = '40
       mapInstanceRef.current = new window.google.maps.Map(mapContainerRef.current, {
         zoom: 10,
         center: defaultLocation,
+        mapTypeId: 'satellite', // Default to satellite mode
         mapTypeControl: true,
         streetViewControl: true,
         fullscreenControl: true,
@@ -183,7 +184,7 @@ export function GoogleMap({ address, coordinates, onLocationSelect, height = '40
           if (status === 'OK' && results && results[0] && mapInstanceRef.current) {
             const location = results[0].geometry.location;
             mapInstanceRef.current.setCenter(location);
-            mapInstanceRef.current.setZoom(15);
+            mapInstanceRef.current.setZoom(20); // Zoom in fully to show individual buildings/houses
             
             // Safely update marker
             if (markerRef.current) {
@@ -220,7 +221,7 @@ export function GoogleMap({ address, coordinates, onLocationSelect, height = '40
       if (!isNaN(lat) && !isNaN(lng)) {
         const position = { lat, lng };
         mapInstanceRef.current.setCenter(position);
-        mapInstanceRef.current.setZoom(15);
+        mapInstanceRef.current.setZoom(20); // Zoom in fully to show individual buildings/houses
         
         // Safely update marker
         if (markerRef.current) {
