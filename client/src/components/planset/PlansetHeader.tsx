@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { IPlanset, SortConfig, TableFilters } from '../../../../shared/types';
 import { FilterControls } from './FilterControls';
+import { UploadPlansetModal } from '../UploadPlansetModal';
+import { useState } from 'react';
 
 interface PlansetHeaderProps {
     filters: TableFilters;
@@ -26,13 +28,24 @@ export const FilterIcon = () => (
 );
 
 export function PlansetHeader({ filters, onFiltersChange, showFilters, onToggleFilters }: PlansetHeaderProps) {
+    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         onFiltersChange({ ...filters, search: e.target.value });
+    };
+
+    const handleUploadClick = () => {
+        setIsUploadModalOpen(true);
+    };
+
+    const handleUploadModalClose = () => {
+        setIsUploadModalOpen(false);
     };
 
     const hasActiveFilters = filters.search.trim() !== '' || (filters.states && filters.states.size > 0) || (filters.portals && filters.portals.size > 0) || (filters.dateRange.from && filters.dateRange.to);
 
     return (
+        <>
         <header className="bg-white dark:bg-[#2a2a2a] p-3 sticky top-0 z-20 rounded-2xl ml-6 mr-6 shadow-sm">
                 {/* Main flex container to correctly position all items */}
                 <div className="flex items-center justify-between w-full">
@@ -51,7 +64,13 @@ export function PlansetHeader({ filters, onFiltersChange, showFilters, onToggleF
                             </PopoverTrigger>
                             <PopoverContent className="w-36 p-1 rounded-md">
                                 <Button variant="ghost" className="w-full justify-start font-normal hover:rounded-2xl hover:text-white hover:bg-[linear-gradient(135deg,#10b981,#059669)]"> <span>📝</span> Create</Button>
-                                <Button variant="ghost" className="w-full justify-start font-normal hover:rounded-2xl hover:text-white hover:bg-[linear-gradient(135deg,#10b981,#059669)]">  <span>📤</span> Upload</Button>
+                                <Button 
+                                    variant="ghost" 
+                                    className="w-full justify-start font-normal hover:rounded-2xl hover:text-white hover:bg-[linear-gradient(135deg,#10b981,#059669)]"
+                                    onClick={handleUploadClick}
+                                >
+                                    <span>📤</span> Upload
+                                </Button>
                             </PopoverContent>
                         </Popover>
                     </div>
@@ -84,5 +103,12 @@ export function PlansetHeader({ filters, onFiltersChange, showFilters, onToggleF
                     </div>
                 </div>
         </header>
+        
+        {/* Upload Planset Modal */}
+        <UploadPlansetModal 
+            isOpen={isUploadModalOpen}
+            onClose={handleUploadModalClose}
+        />
+    </>
     );
 }
