@@ -29,6 +29,7 @@ class AuthService {
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "true",
         },
       });
 
@@ -55,9 +56,10 @@ class AuthService {
         headers: {
           "Content-Type": "application/json",
           "X-CSRFToken": csrfToken,
+          "ngrok-skip-browser-warning": "true",
         },
         body: JSON.stringify({
-          email,
+          username: email,
           password,
           remember_me: rememberMe,
         }),
@@ -106,6 +108,7 @@ class AuthService {
         headers: {
           "Content-Type": "application/json",
           "X-CSRFToken": csrfToken,
+          "ngrok-skip-browser-warning": "true",
         },
       });
 
@@ -130,6 +133,7 @@ class AuthService {
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "true",
         },
       });
 

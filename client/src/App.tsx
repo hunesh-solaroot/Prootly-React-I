@@ -80,9 +80,15 @@ function Router() {
               </Route>
               
               {/* Garage Routes */}
-              <Route path="/garage/electrical" component={Electrical} />
-              <Route path="/garage/structural" component={Structural} />
-              <Route path="/garage/requirements" component={Requirements} />
+              <Route path="/garage/electrical">
+                <Electrical currentCategory="electrical" currentTableType="electrical" />
+              </Route>
+              <Route path="/garage/structural">
+                <Structural currentTableType="structural" />
+              </Route>
+              <Route path="/garage/requirements">
+                <Requirements currentTableType="requirements" />
+              </Route>
 
               {/* NotFound Route should be last */}
               <Route component={NotFound} />
