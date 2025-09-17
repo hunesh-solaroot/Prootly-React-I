@@ -15,6 +15,7 @@ import Members from "./pages/Members";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import ProjectDashboardPage from "./pages/ProjectDashboardPage";
+import Login from "./pages/Login";
 import NotFound from "@/pages/not-found";
 
 // Design Pages
@@ -33,51 +34,59 @@ import Requirements from "./pages/garage/Requirements";
 
 function Router() {
   return (
-    <Layout>
-      <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/employees" component={Employees} />
-        <Route path="/clients" component={Clients} />
-        <Route path="/design" component={Design} />
-        <Route path="/teams" component={Teams} />
-        <Route path="/garage" component={Garage} />
-        <Route path="/members" component={Members} />
-        <Route path="/profile" component={Profile} />
-        <Route path="/settings" component={Settings} />
-        <Route path="/project-dashboard/:id" component={ProjectDashboardPage} />
+    <Switch>
+      {/* Login route - no layout */}
+      <Route path="/login" component={Login} />
+      
+      {/* All other routes - with layout */}
+      <Route>
+        <Layout>
+          <Switch>
+            <Route path="/" component={Dashboard} />
+            <Route path="/employees" component={Employees} />
+            <Route path="/clients" component={Clients} />
+            <Route path="/design" component={Design} />
+            <Route path="/teams" component={Teams} />
+            <Route path="/garage" component={Garage} />
+            <Route path="/members" component={Members} />
+            <Route path="/profile" component={Profile} />
+            <Route path="/settings" component={Settings} />
+            <Route path="/project-dashboard/:id" component={ProjectDashboardPage} />
 
-        {/* Design Routes */}
-        <Route path="/design/new-projects">
-          <NewProjects tableType="new" pageTitle="New Projects" />
-        </Route>
-        <Route path="/design/design-review">
-          <DesignReview tableType="design-review" pageTitle="Design Review" />
-        </Route>
-        <Route path="/design/in-revision">
-          <InRevision tableType="in-revision" pageTitle="In Revision" />
-        </Route>
-        <Route path="/design/hold-projects">
-          <HoldProjects tableType="hold" pageTitle="Hold Projects" />
-        </Route>
-        <Route path="/design/in-designing">
-          <InDesigning tableType="in-designing" pageTitle="In Designing" />
-        </Route>
-        <Route path="/design/completed">
-          <Completed tableType="completed" pageTitle="Completed Projects" />
-        </Route>
-        <Route path="/design/canceled">
-          <Canceled tableType="canceled" pageTitle="Canceled Projects" />
-        </Route>
-        
-        {/* Garage Routes */}
-        <Route path="/garage/electrical" component={Electrical} />
-        <Route path="/garage/structural" component={Structural} />
-        <Route path="/garage/requirements" component={Requirements} />
+            {/* Design Routes */}
+            <Route path="/design/new-projects">
+              <NewProjects tableType="new" pageTitle="New Projects" />
+            </Route>
+            <Route path="/design/design-review">
+              <DesignReview tableType="design-review" pageTitle="Design Review" />
+            </Route>
+            <Route path="/design/in-revision">
+              <InRevision tableType="in-revision" pageTitle="In Revision" />
+            </Route>
+            <Route path="/design/hold-projects">
+              <HoldProjects tableType="hold" pageTitle="Hold Projects" />
+            </Route>
+            <Route path="/design/in-designing">
+              <InDesigning tableType="in-designing" pageTitle="In Designing" />
+            </Route>
+            <Route path="/design/completed">
+              <Completed tableType="completed" pageTitle="Completed Projects" />
+            </Route>
+            <Route path="/design/canceled">
+              <Canceled tableType="canceled" pageTitle="Canceled Projects" />
+            </Route>
+            
+            {/* Garage Routes */}
+            <Route path="/garage/electrical" component={Electrical} />
+            <Route path="/garage/structural" component={Structural} />
+            <Route path="/garage/requirements" component={Requirements} />
 
-        {/* NotFound Route should be last */}
-        <Route component={NotFound} />
-      </Switch>
-    </Layout>
+            {/* NotFound Route should be last */}
+            <Route component={NotFound} />
+          </Switch>
+        </Layout>
+      </Route>
+    </Switch>
   );
 }
 
