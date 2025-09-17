@@ -55,8 +55,8 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    sameSite: 'lax',
-    secure: false, // Set to true in production with HTTPS
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    secure: process.env.NODE_ENV === 'production', // Only secure in production with HTTPS
     maxAge: undefined // Session cookie by default
   }
 }));
@@ -109,6 +109,15 @@ const verifyCsrf = (req: any, res: any, next: any) => {
 
 // Apply CSRF middleware globally for API routes
 app.use('/api', generateCsrfIfMissing);
+
+// Apply CSRF verification for state-changing requests globally
+app.use('/api', (req: any, res: any, next: any) => {
+  // Only apply CSRF verification to state-changing HTTP methods
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+    return verifyCsrf(req, res, next);
+  }
+  next();
+});
 
 (async () => {
   const server = await registerRoutes(app);

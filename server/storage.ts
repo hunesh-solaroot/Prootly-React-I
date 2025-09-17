@@ -63,12 +63,15 @@ export class DatabaseStorage implements IStorage {
       const existingEmployees = await db.select().from(employees).limit(1);
       const existingUsers = await db.select().from(users).limit(1);
       
-      if (existingEmployees.length === 0) {
-        await this.insertSampleData();
-      }
-      
-      if (existingUsers.length === 0) {
-        await this.insertDefaultUser();
+      // Only seed sample data in development environment
+      if (process.env.NODE_ENV !== 'production') {
+        if (existingEmployees.length === 0) {
+          await this.insertSampleData();
+        }
+        
+        if (existingUsers.length === 0) {
+          await this.insertDefaultUser();
+        }
       }
     } catch (error) {
       // Tables might not exist yet, that's okay

@@ -4,15 +4,14 @@ import passport from "passport";
 import { storage } from "./storage";
 import { insertEmployeeSchema, insertClientSchema, insertCommentSchema } from "@shared/schema";
 
+// Extend session interface to include custom properties
+declare module 'express-session' {
+  interface SessionData {
+    csrfToken?: string;
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
-  // CSRF verification middleware
-  const verifyCsrf = (req: any, res: any, next: any) => {
-    const token = req.headers['x-csrftoken'] || req.headers['x-csrf-token'];
-    if (!token || token !== req.session.csrfToken) {
-      return res.status(403).json({ error: 'CSRF token mismatch' });
-    }
-    next();
-  };
 
   // Authentication routes
   app.get("/api/csrf-token/", (req: any, res) => {
@@ -20,7 +19,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ csrfToken: req.session.csrfToken });
   });
 
-  app.post("/api/react-login/", verifyCsrf, (req, res, next) => {
+  app.post("/api/react-login/", (req, res, next) => {
     passport.authenticate('local', (err: any, user: any, info: any) => {
       if (err) {
         return res.status(500).json({ success: false, error: 'Internal server error' });
@@ -29,30 +28,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ success: false, error: info?.message || 'Invalid credentials' });
       }
       
-      req.logIn(user, (loginErr) => {
-        if (loginErr) {
-          return res.status(500).json({ success: false, error: 'Login failed' });
+      // Regenerate session ID to prevent session fixation attacks
+      req.session.regenerate((regenerateErr: any) => {
+        if (regenerateErr) {
+          return res.status(500).json({ success: false, error: 'Session regeneration failed' });
         }
         
-        // Set session expiry based on remember_me
-        const rememberMe = req.body.remember_me;
-        if (rememberMe) {
-          req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
-        }
+        // Re-generate CSRF token for new session
+        req.session.csrfToken = require('crypto').randomBytes(32).toString('hex');
         
-        res.json({ 
-          success: true, 
-          user: { 
-            id: user.id, 
-            username: user.username, 
-            email: user.email 
-          } 
+        req.logIn(user, (loginErr) => {
+          if (loginErr) {
+            return res.status(500).json({ success: false, error: 'Login failed' });
+          }
+          
+          // Set session expiry based on remember_me
+          const rememberMe = req.body.remember_me;
+          if (rememberMe) {
+            req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
+          }
+          
+          res.json({ 
+            success: true, 
+            user: { 
+              id: user.id, 
+              username: user.username, 
+              email: user.email 
+            } 
+          });
         });
       });
     })(req, res, next);
   });
 
-  app.post("/api/react-logout/", verifyCsrf, (req: any, res) => {
+  app.post("/api/react-logout/", (req: any, res) => {
     req.logout((err: any) => {
       if (err) {
         return res.status(500).json({ success: false, error: 'Logout failed' });
