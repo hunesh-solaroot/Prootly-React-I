@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/ThemeProvider";
+import { useAuth } from "../contexts/AuthContext";
 import { useLocation } from "wouter";
 import GlobalSearch from "@/components/GlobalSearch";
 import ProfileModal from "@/components/ProfileModal";
@@ -42,12 +43,13 @@ const pageNames: Record<string, string> = {
 export default function TopNavigation() {
   const [location, navigate] = useLocation();
   const { theme, setTheme } = useTheme();
+  const { user, logout } = useAuth();
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [profileData, setProfileData] = useState<ProfileData>({
-    name: "Ashwini Bhardwaj",
-    email: "ashwini@prootly.com",
+    name: user?.username || "User",
+    email: user?.email || "user@example.com",
     role: "Renewable Energy Specialist",
     profileImage: undefined,
   });
@@ -88,11 +90,17 @@ export default function TopNavigation() {
     localStorage.setItem("prootly-profile", JSON.stringify(newProfile));
   };
 
-  const handleLogout = () => {
-    // Handle logout logic here
-    localStorage.removeItem("prootly-profile");
-    navigate("/login");
-    setDropdownOpen(false);
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setDropdownOpen(false);
+      // Navigation will be handled by the ProtectedRoute component
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Still close dropdown and try to navigate to login
+      setDropdownOpen(false);
+      navigate("/login");
+    }
   };
 
   const handleProfileClick = () => {
