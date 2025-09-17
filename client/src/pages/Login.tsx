@@ -1,23 +1,36 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Eye, EyeOff, User, Lock } from "lucide-react";
-import { Link } from "wouter";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Eye, EyeOff, User, Lock, AlertCircle } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import solarootLogo from "@assets/solaroot (1)_1758101120764.png";
 import backgroundImage from "@assets/img5_1758101120765.jpg";
 
-type LoginFormData = {
-  email: string;
-  password: string;
-  rememberMe: boolean;
-};
+const loginSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(1, "Password is required"),
+  rememberMe: z.boolean(),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
-  const { register, handleSubmit, watch } = useForm<LoginFormData>({
+  const [loginError, setLoginError] = useState<string>("");
+  const [, setLocation] = useLocation();
+  const { login, isLoading } = useAuth();
+  const { toast } = useToast();
+  
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
@@ -25,9 +38,24 @@ export default function Login() {
     },
   });
 
-  const onSubmit = (data: LoginFormData) => {
-    console.log("Login form data:", data);
-    // This will be connected to API later
+  const onSubmit = async (data: LoginFormData) => {
+    setLoginError("");
+    
+    try {
+      const result = await login(data.email, data.password, data.rememberMe);
+      
+      if (result.success) {
+        toast({
+          title: "Login successful",
+          description: "Welcome back!",
+        });
+        setLocation("/"); // Redirect to dashboard
+      } else {
+        setLoginError(result.error || "Login failed");
+      }
+    } catch (error) {
+      setLoginError("Network error. Please try again.");
+    }
   };
 
   return (
@@ -133,6 +161,13 @@ export default function Login() {
           </div>
           
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {loginError && (
+              <Alert variant="destructive" data-testid="alert-login-error">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{loginError}</AlertDescription>
+              </Alert>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium text-gray-700">
                 Email
@@ -144,10 +179,15 @@ export default function Login() {
                   id="email"
                   type="email"
                   placeholder="hello@example.com"
-                  className="pl-10 h-12 border-gray-200 focus:border-green-500 focus:ring-green-500"
+                  className={`pl-10 h-12 border-gray-200 focus:border-green-500 focus:ring-green-500 ${errors.email ? 'border-red-500' : ''}`}
                   data-testid="input-email"
                 />
               </div>
+              {errors.email && (
+                <p className="text-sm text-red-500" data-testid="error-email">
+                  {errors.email.message}
+                </p>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -161,7 +201,7 @@ export default function Login() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Password"
-                  className="pl-10 pr-10 h-12 border-gray-200 focus:border-green-500 focus:ring-green-500"
+                  className={`pl-10 pr-10 h-12 border-gray-200 focus:border-green-500 focus:ring-green-500 ${errors.password ? 'border-red-500' : ''}`}
                   data-testid="input-password"
                 />
                 <button
@@ -173,6 +213,11 @@ export default function Login() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              {errors.password && (
+                <p className="text-sm text-red-500" data-testid="error-password">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
             
             <div className="flex items-center justify-between">
@@ -195,10 +240,11 @@ export default function Login() {
             
             <Button
               type="submit"
-              className="w-full bg-green-600 hover:bg-green-700 text-white h-12 text-base font-medium"
+              disabled={isLoading}
+              className="w-full bg-green-600 hover:bg-green-700 text-white h-12 text-base font-medium disabled:opacity-50"
               data-testid="button-signin"
             >
-              Sign In
+              {isLoading ? "Signing In..." : "Sign In"}
             </Button>
             
             <div className="text-center">
