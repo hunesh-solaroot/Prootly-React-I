@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { sql, relations } from "drizzle-orm";
 import { pgTable, text, varchar, integer, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -109,3 +109,29 @@ export type Comment = typeof comments.$inferSelect;
 
 export type InsertEmployeeProfile = z.infer<typeof insertEmployeeProfileSchema>;
 export type EmployeeProfile = typeof employeeProfiles.$inferSelect;
+
+// Relations
+export const clientsRelations = relations(clients, ({ many }) => ({
+  projects: many(projects),
+}));
+
+export const projectsRelations = relations(projects, ({ one }) => ({
+  client: one(clients, {
+    fields: [projects.clientId],
+    references: [clients.id],
+  }),
+}));
+
+export const employeesRelations = relations(employees, ({ one }) => ({
+  profile: one(employeeProfiles, {
+    fields: [employees.id],
+    references: [employeeProfiles.employeeId],
+  }),
+}));
+
+export const employeeProfilesRelations = relations(employeeProfiles, ({ one }) => ({
+  employee: one(employees, {
+    fields: [employeeProfiles.employeeId],
+    references: [employees.id],
+  }),
+}));

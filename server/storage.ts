@@ -1,4 +1,22 @@
-import { type User, type InsertUser, type Employee, type InsertEmployee, type Client, type InsertClient, type Project, type InsertProject, type Comment, type InsertComment } from "@shared/schema";
+import { 
+  type User, 
+  type InsertUser, 
+  type Employee, 
+  type InsertEmployee, 
+  type Client, 
+  type InsertClient, 
+  type Project, 
+  type InsertProject, 
+  type Comment, 
+  type InsertComment,
+  users,
+  employees,
+  clients,
+  projects,
+  comments
+} from "@shared/schema";
+import { db } from "./db";
+import { eq, ilike, or, desc } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -33,263 +51,233 @@ export interface IStorage {
   createComment(comment: InsertComment): Promise<Comment>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-  private employees: Map<string, Employee>;
-  private clients: Map<string, Client>;
-  private projects: Map<string, Project>;
-  private comments: Map<string, Comment>;
-
+export class DatabaseStorage implements IStorage {
   constructor() {
-    this.users = new Map();
-    this.employees = new Map();
-    this.clients = new Map();
-    this.projects = new Map();
-    this.comments = new Map();
-
-    // Initialize with some sample data
-    this.initializeSampleData();
+    // Initialize sample data on first run if needed
+    this.initializeSampleDataIfEmpty();
   }
 
-  private initializeSampleData() {
-    // Sample employees
-    const sampleEmployees: Employee[] = [
-      {
-        id: randomUUID(),
-        name: "John Smith",
-        email: "john.smith@prootly.com",
-        role: "Project Manager",
-        status: "active",
-        profileImage: null,
-        createdAt: new Date(),
-      },
-      {
-        id: randomUUID(),
-        name: "Sarah Johnson",
-        email: "sarah.johnson@prootly.com",
-        role: "Solar Engineer",
-        status: "active",
-        profileImage: null,
-        createdAt: new Date(),
-      },
-    ];
+  private async initializeSampleDataIfEmpty() {
+    try {
+      const existingEmployees = await db.select().from(employees).limit(1);
+      if (existingEmployees.length === 0) {
+        await this.insertSampleData();
+      }
+    } catch (error) {
+      // Tables might not exist yet, that's okay
+      console.log("Database tables not yet created, sample data will be added after migration");
+    }
+  }
 
-    // Sample clients
-    const sampleClients: Client[] = [
-      {
-        id: randomUUID(),
-        companyName: "Green Energy Solutions",
-        contactPerson: "Michael Brown",
-        email: "michael@greenenergy.com",
-        phone: "+1-555-0123",
-        status: "active",
-        notes: "Leading renewable energy company",
-        createdAt: new Date(),
-      },
-      {
-        id: randomUUID(),
-        companyName: "Solar Dynamics",
-        contactPerson: "Lisa Davis",
-        email: "lisa@solardynamics.com",
-        phone: "+1-555-0456",
-        status: "active",
-        notes: "Residential solar installations",
-        createdAt: new Date(),
-      },
-    ];
+  private async insertSampleData() {
+    try {
+      // Sample employees
+      const sampleEmployees = await db.insert(employees).values([
+        {
+          name: "John Smith",
+          email: "john.smith@prootly.com",
+          role: "Project Manager",
+          status: "active",
+          profileImage: null,
+        },
+        {
+          name: "Sarah Johnson",
+          email: "sarah.johnson@prootly.com",
+          role: "Solar Engineer",
+          status: "active",
+          profileImage: null,
+        },
+      ]).returning();
 
-    // Sample projects
-    const sampleProjects: Project[] = [
-      {
-        id: randomUUID(),
-        name: "Residential Solar Installation",
-        status: "completed",
-        clientId: sampleClients[0].id,
-        createdAt: new Date(),
-      },
-      {
-        id: randomUUID(),
-        name: "Commercial Solar Array",
-        status: "new",
-        clientId: sampleClients[1].id,
-        createdAt: new Date(),
-      },
-    ];
+      // Sample clients
+      const sampleClients = await db.insert(clients).values([
+        {
+          companyName: "Green Energy Solutions",
+          contactPerson: "Michael Brown",
+          email: "michael@greenenergy.com",
+          phone: "+1-555-0123",
+          status: "active",
+          notes: "Leading renewable energy company",
+        },
+        {
+          companyName: "Solar Dynamics",
+          contactPerson: "Lisa Davis",
+          email: "lisa@solardynamics.com",
+          phone: "+1-555-0456",
+          status: "active",
+          notes: "Residential solar installations",
+        },
+      ]).returning();
 
-    // Sample comments
-    const sampleComments: Comment[] = [
-      {
-        id: randomUUID(),
-        author: "SON LIGHT CONSTRUCTION",
-        company: "Mercedes Melendez",
-        text: "Hello. Any update on these revisions? It's been a few...",
-        createdAt: new Date(),
-      },
-      {
-        id: randomUUID(),
-        author: "JOHNSUN ENERGY",
-        company: "Project Manager",
-        text: "Project timeline updated. Ready for next phase review.",
-        createdAt: new Date(),
-      },
-    ];
+      // Sample projects
+      await db.insert(projects).values([
+        {
+          name: "Residential Solar Installation",
+          status: "completed",
+          clientId: sampleClients[0].id,
+        },
+        {
+          name: "Commercial Solar Array",
+          status: "new",
+          clientId: sampleClients[1].id,
+        },
+      ]);
 
-    // Store samples
-    sampleEmployees.forEach(emp => this.employees.set(emp.id, emp));
-    sampleClients.forEach(client => this.clients.set(client.id, client));
-    sampleProjects.forEach(project => this.projects.set(project.id, project));
-    sampleComments.forEach(comment => this.comments.set(comment.id, comment));
+      // Sample comments
+      await db.insert(comments).values([
+        {
+          author: "SON LIGHT CONSTRUCTION",
+          company: "Mercedes Melendez",
+          text: "Hello. Any update on these revisions? It's been a few...",
+        },
+        {
+          author: "JOHNSUN ENERGY",
+          company: "Project Manager",
+          text: "Project timeline updated. Ready for next phase review.",
+        },
+      ]);
+
+      console.log("Sample data inserted successfully");
+    } catch (error) {
+      console.log("Sample data insertion failed:", error);
+    }
   }
 
   // User methods
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
 
   // Employee methods
   async getEmployees(): Promise<Employee[]> {
-    return Array.from(this.employees.values());
+    return await db.select().from(employees);
   }
 
   async getEmployee(id: string): Promise<Employee | undefined> {
-    return this.employees.get(id);
+    const [employee] = await db.select().from(employees).where(eq(employees.id, id));
+    return employee || undefined;
   }
 
   async createEmployee(insertEmployee: InsertEmployee): Promise<Employee> {
-    const id = randomUUID();
-    const employee: Employee = { 
-      ...insertEmployee, 
-      id, 
-      createdAt: new Date(),
-      status: insertEmployee.status || "active",
-      profileImage: insertEmployee.profileImage || null
-    };
-    this.employees.set(id, employee);
+    const [employee] = await db
+      .insert(employees)
+      .values(insertEmployee)
+      .returning();
     return employee;
   }
 
   async updateEmployee(id: string, updates: Partial<InsertEmployee>): Promise<Employee | undefined> {
-    const employee = this.employees.get(id);
-    if (!employee) return undefined;
-    
-    const updatedEmployee = { ...employee, ...updates };
-    this.employees.set(id, updatedEmployee);
-    return updatedEmployee;
+    const [employee] = await db
+      .update(employees)
+      .set(updates)
+      .where(eq(employees.id, id))
+      .returning();
+    return employee || undefined;
   }
 
   async deleteEmployee(id: string): Promise<boolean> {
-    return this.employees.delete(id);
+    const result = await db.delete(employees).where(eq(employees.id, id));
+    return (result.rowCount ?? 0) > 0;
   }
 
   async searchEmployees(query: string): Promise<Employee[]> {
-    const lowerQuery = query.toLowerCase();
-    return Array.from(this.employees.values()).filter(
-      employee => 
-        employee.name.toLowerCase().includes(lowerQuery) ||
-        employee.email.toLowerCase().includes(lowerQuery)
-    );
+    return await db.select()
+      .from(employees)
+      .where(
+        or(
+          ilike(employees.name, `%${query}%`),
+          ilike(employees.email, `%${query}%`)
+        )
+      );
   }
 
   // Client methods
   async getClients(): Promise<Client[]> {
-    return Array.from(this.clients.values());
+    return await db.select().from(clients);
   }
 
   async getClient(id: string): Promise<Client | undefined> {
-    return this.clients.get(id);
+    const [client] = await db.select().from(clients).where(eq(clients.id, id));
+    return client || undefined;
   }
 
   async createClient(insertClient: InsertClient): Promise<Client> {
-    const id = randomUUID();
-    const client: Client = { 
-      ...insertClient, 
-      id, 
-      createdAt: new Date(),
-      status: insertClient.status || "active",
-      phone: insertClient.phone || null,
-      notes: insertClient.notes || null
-    };
-    this.clients.set(id, client);
+    const [client] = await db
+      .insert(clients)
+      .values(insertClient)
+      .returning();
     return client;
   }
 
   async updateClient(id: string, updates: Partial<InsertClient>): Promise<Client | undefined> {
-    const client = this.clients.get(id);
-    if (!client) return undefined;
-    
-    const updatedClient = { ...client, ...updates };
-    this.clients.set(id, updatedClient);
-    return updatedClient;
+    const [client] = await db
+      .update(clients)
+      .set(updates)
+      .where(eq(clients.id, id))
+      .returning();
+    return client || undefined;
   }
 
   async deleteClient(id: string): Promise<boolean> {
-    return this.clients.delete(id);
+    const result = await db.delete(clients).where(eq(clients.id, id));
+    return (result.rowCount ?? 0) > 0;
   }
 
   async searchClients(query: string): Promise<Client[]> {
-    const lowerQuery = query.toLowerCase();
-    return Array.from(this.clients.values()).filter(
-      client => 
-        client.companyName.toLowerCase().includes(lowerQuery) ||
-        client.contactPerson.toLowerCase().includes(lowerQuery) ||
-        client.email.toLowerCase().includes(lowerQuery)
-    );
+    return await db.select()
+      .from(clients)
+      .where(
+        or(
+          ilike(clients.companyName, `%${query}%`),
+          ilike(clients.contactPerson, `%${query}%`),
+          ilike(clients.email, `%${query}%`)
+        )
+      );
   }
 
   // Project methods
   async getProjects(): Promise<Project[]> {
-    return Array.from(this.projects.values());
+    return await db.select().from(projects);
   }
 
   async getProjectsByStatus(status: string): Promise<Project[]> {
-    return Array.from(this.projects.values()).filter(
-      project => project.status === status
-    );
+    return await db.select().from(projects).where(eq(projects.status, status));
   }
 
   async createProject(insertProject: InsertProject): Promise<Project> {
-    const id = randomUUID();
-    const project: Project = { 
-      ...insertProject, 
-      id, 
-      createdAt: new Date(),
-      clientId: insertProject.clientId || null
-    };
-    this.projects.set(id, project);
+    const [project] = await db
+      .insert(projects)
+      .values(insertProject)
+      .returning();
     return project;
   }
 
   // Comment methods
   async getComments(): Promise<Comment[]> {
-    return Array.from(this.comments.values()).sort(
-      (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-    );
+    return await db.select().from(comments).orderBy(desc(comments.createdAt));
   }
 
   async createComment(insertComment: InsertComment): Promise<Comment> {
-    const id = randomUUID();
-    const comment: Comment = { 
-      ...insertComment, 
-      id, 
-      createdAt: new Date(),
-      company: insertComment.company || null
-    };
-    this.comments.set(id, comment);
+    const [comment] = await db
+      .insert(comments)
+      .values(insertComment)
+      .returning();
     return comment;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
