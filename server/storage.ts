@@ -18,6 +18,7 @@ import {
 import { db } from "./db";
 import { eq, ilike, or, desc } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import bcrypt from "bcryptjs";
 
 export interface IStorage {
   // User methods
@@ -60,12 +61,30 @@ export class DatabaseStorage implements IStorage {
   private async initializeSampleDataIfEmpty() {
     try {
       const existingEmployees = await db.select().from(employees).limit(1);
+      const existingUsers = await db.select().from(users).limit(1);
+      
       if (existingEmployees.length === 0) {
         await this.insertSampleData();
+      }
+      
+      if (existingUsers.length === 0) {
+        await this.insertDefaultUser();
       }
     } catch (error) {
       // Tables might not exist yet, that's okay
       console.log("Database tables not yet created, sample data will be added after migration");
+    }
+  }
+
+  private async insertDefaultUser() {
+    try {
+      await this.createUser({
+        username: "admin",
+        password: "password"
+      });
+      console.log("Default admin user created (username: admin, password: password)");
+    } catch (error) {
+      console.log("Failed to create default user:", error);
     }
   }
 
@@ -155,11 +174,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
+    // Hash the password before storing
+    const hashedPassword = await bcrypt.hash(insertUser.password, 12);
     const [user] = await db
       .insert(users)
-      .values(insertUser)
+      .values({
+        ...insertUser,
+        password: hashedPassword
+      })
       .returning();
     return user;
+  }
+
+  async validateUserPassword(username: string, password: string): Promise<User | null> {
+    const user = await this.getUserByUsername(username);
+    if (!user) return null;
+    
+    const isValid = await bcrypt.compare(password, user.password);
+    return isValid ? user : null;
   }
 
   // Employee methods

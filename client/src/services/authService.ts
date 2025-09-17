@@ -15,7 +15,7 @@ interface CSRFResponse {
 }
 
 class AuthService {
-  private baseUrl = "https://c9519414f503.ngrok-free.app";
+  private baseUrl = "";
   private csrfToken: string | null = null;
 
   private async getCsrfToken(): Promise<string> {
@@ -29,7 +29,6 @@ class AuthService {
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          "ngrok-skip-browser-warning": "true",
         },
       });
 
@@ -56,7 +55,7 @@ class AuthService {
         headers: {
           "Content-Type": "application/json",
           "X-CSRFToken": csrfToken,
-          "ngrok-skip-browser-warning": "true",
+
         },
         body: JSON.stringify({
           username: email,
@@ -108,7 +107,7 @@ class AuthService {
         headers: {
           "Content-Type": "application/json",
           "X-CSRFToken": csrfToken,
-          "ngrok-skip-browser-warning": "true",
+
         },
       });
 
@@ -133,7 +132,6 @@ class AuthService {
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          "ngrok-skip-browser-warning": "true",
         },
       });
 
