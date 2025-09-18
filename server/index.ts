@@ -1,7 +1,13 @@
 import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
+import session from "express-session";
+import passport from "passport";
+import { Strategy as LocalStrategy } from "passport-local";
+import MemoryStore from "memorystore";
+import crypto from "crypto";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { storage } from "./storage";
 
 const app = express();
 app.use(express.json());
@@ -37,6 +43,83 @@ app.use((req, res, next) => {
   next();
 });
 
+// Session configuration
+const MemoryStoreSession = MemoryStore(session);
+const sessionSecret = process.env.SESSION_SECRET || "your-secret-key-change-in-production";
+
+app.use(session({
+  store: new MemoryStoreSession({
+    checkPeriod: 86400000 // prune expired entries every 24h
+  }),
+  secret: sessionSecret,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    secure: process.env.NODE_ENV === 'production', // Only secure in production with HTTPS
+    maxAge: undefined // Session cookie by default
+  }
+}));
+
+// Passport configuration
+passport.use(new LocalStrategy(async (username, password, done) => {
+  try {
+    const user = await storage.validateUserPassword(username, password);
+    if (user) {
+      return done(null, user);
+    } else {
+      return done(null, false, { message: 'Invalid credentials' });
+    }
+  } catch (error) {
+    return done(error);
+  }
+}));
+
+passport.serializeUser((user: any, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser(async (id: string, done) => {
+  try {
+    const user = await storage.getUser(id);
+    done(null, user);
+  } catch (error) {
+    done(error, null);
+  }
+});
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+// CSRF middleware
+const generateCsrfIfMissing = (req: any, res: any, next: any) => {
+  if (!req.session.csrfToken) {
+    req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+  }
+  next();
+};
+
+const verifyCsrf = (req: any, res: any, next: any) => {
+  const token = req.headers['x-csrftoken'] || req.headers['x-csrf-token'];
+  if (!token || token !== req.session.csrfToken) {
+    return res.status(403).json({ error: 'CSRF token mismatch' });
+  }
+  next();
+};
+
+// Apply CSRF middleware globally for API routes
+app.use('/api', generateCsrfIfMissing);
+
+// Apply CSRF verification for state-changing requests globally
+app.use('/api', (req: any, res: any, next: any) => {
+  // Only apply CSRF verification to state-changing HTTP methods
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+    return verifyCsrf(req, res, next);
+  }
+  next();
+});
+
 (async () => {
   const server = await registerRoutes(app);
 
@@ -63,8 +146,8 @@ app.use((req, res, next) => {
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
   
-  // MODIFIED: Removed the unsupported 'reusePort: true' option
-  server.listen(port, "127.0.0.1", () => {
+  // Bind to 0.0.0.0 for Replit compatibility
+  server.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
   });
 })();
