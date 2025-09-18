@@ -55,10 +55,6 @@ class AuthService {
         headers: {
           "Content-Type": "application/json",
           "X-CSRFToken": csrfToken,
-<<<<<<< HEAD
-=======
-
->>>>>>> b372df01c7caa550dd938935b1dbbd91a333ddea
         },
         body: JSON.stringify({
           username: email,
