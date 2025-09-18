@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, User, Lock, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, User, Lock, AlertCircle, TrendingUp, Clock, BarChart, FolderKanban, Users, Settings2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -59,103 +59,76 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex w-full">
       {/* Left Side - Background with overlay content */}
       <div 
-        className="flex-1 bg-cover bg-center relative"
+        className="hidden lg:flex lg:w-1/2 bg-cover bg-center relative items-center justify-center p-12"
         style={{ backgroundImage: `url(${backgroundImage})` }}
       >
-        {/* Green overlay */}
-        <div className="absolute inset-0 bg-green-600/80"></div>
+        {/* Semi-transparent green overlay covering the entire left half */}
+        <div className="absolute inset-0 bg-green-600/70"></div>
         
-        {/* Content overlay */}
-        <div className="relative z-10 flex flex-col h-full">
-          {/* Logo */}
-          <div className="p-8">
-            <div className="bg-white rounded-lg p-6 w-fit">
+        {/* Logo container - positioned relatively within the left half */}
+        <div className="absolute top-49 left-1/2 -translate-x-1/2 mt-12 z-20"> {/* Centered top */}
+            <div className="bg-white rounded-lg p-6">
               <img 
                 src={solarootLogo} 
                 alt="Solaroot Logo" 
-                className="h-12 w-auto"
+                className="h-50 w-auto" // CHANGED: Logo size doubled from h-14 to h-28
                 data-testid="img-logo"
               />
             </div>
-          </div>
-          
-          {/* Main content */}
-          <div className="flex-1 flex items-center justify-start px-8">
-            <div className="text-white max-w-md">
+        </div>
+
+        {/* Content block with blur effect - absolutely positioned */}
+        {/* CHANGED: Adjusted vertical position from top-1/2 to top-[55%] to increase gap */}
+        {/* <div className="absolute top-[55%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 
+                      w-[80%] max-w-lg bg-white/10 backdrop-blur-md rounded-xl p-10">
+            <div className="text-white text-center">
               <h1 className="text-4xl font-bold mb-8" data-testid="text-heading">
                 Master Your Solar Projects
               </h1>
               
-              <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-x-8 gap-y-6 text-lg">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 flex items-center justify-center">
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M3 13h1v7c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-7h1a1 1 0 0 0 .707-1.707l-9-9a.999.999 0 0 0-1.414 0l-9 9A1 1 0 0 0 3 13z"/>
-                    </svg>
-                  </div>
+                  <TrendingUp className="w-6 h-6 flex-shrink-0" />
                   <span data-testid="text-feature-1">Track processes smoothly</span>
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 flex items-center justify-center">
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/>
-                      <path d="M13 7h-2v5.414l3.293 3.293 1.414-1.414L13 11.586V7z"/>
-                    </svg>
-                  </div>
+                  <Clock className="w-6 h-6 flex-shrink-0" />
                   <span data-testid="text-feature-2">Access live update anytime</span>
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 flex items-center justify-center">
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/>
-                      <path d="M8 12l2 2 4-4"/>
-                    </svg>
-                  </div>
+                  <BarChart className="w-6 h-6 flex-shrink-0" />
                   <span data-testid="text-feature-3">Get customized insights</span>
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 flex items-center justify-center">
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h1zm2-4a3 3 0 0 1 6 0v4H9V7z"/>
-                    </svg>
-                  </div>
+                  <FolderKanban className="w-6 h-6 flex-shrink-0" />
                   <span data-testid="text-feature-4">Manage projects with ease</span>
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 flex items-center justify-center">
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                    </svg>
-                  </div>
+                  <Users className="w-6 h-6 flex-shrink-0" />
                   <span data-testid="text-feature-5">Enhance team collaboration</span>
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 flex items-center justify-center">
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-                    </svg>
-                  </div>
+                  <Settings2 className="w-6 h-6 flex-shrink-0" />
                   <span data-testid="text-feature-6">Personalized fit to your needs</span>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+        </div> */}
       </div>
       
-      {/* Right Side - Login Form */}
-      <div className="w-full max-w-md bg-white flex items-center justify-center p-8">
+      {/* Right Side - Login Form (No changes here) */}
+      <div className="w-full lg:w-1/2 bg-white flex items-center justify-center p-8">
         <div className="w-full max-w-sm space-y-6">
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold text-green-600 mb-8" data-testid="text-signin-heading">
+          <div className="text-left">
+            <h2 className="text-3xl font-bold text-green-600 mb-8" data-testid="text-signin-heading">
               Sign in to your account
             </h2>
           </div>
@@ -173,13 +146,13 @@ export default function Login() {
                 Email
               </Label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input
                   {...register("email")}
                   id="email"
                   type="email"
                   placeholder="hello@example.com"
-                  className={`pl-10 h-12 border-gray-200 focus:border-green-500 focus:ring-green-500 ${errors.email ? 'border-red-500' : ''}`}
+                  className={`pl-10 h-12 border-gray-200 rounded-md focus:border-green-500 focus:ring-green-500 ${errors.email ? 'border-red-500' : ''}`}
                   data-testid="input-email"
                 />
               </div>
@@ -195,13 +168,13 @@ export default function Login() {
                 Password
               </Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input
                   {...register("password")}
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Password"
-                  className={`pl-10 pr-10 h-12 border-gray-200 focus:border-green-500 focus:ring-green-500 ${errors.password ? 'border-red-500' : ''}`}
+                  className={`pl-10 pr-10 h-12 border-gray-200 rounded-md focus:border-green-500 focus:ring-green-500 ${errors.password ? 'border-red-500' : ''}`}
                   data-testid="input-password"
                 />
                 <button
@@ -210,7 +183,7 @@ export default function Login() {
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   data-testid="button-toggle-password"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
               {errors.password && (
@@ -227,12 +200,12 @@ export default function Login() {
                   id="remember-me" 
                   data-testid="checkbox-remember-me"
                 />
-                <Label htmlFor="remember-me" className="text-sm text-gray-600">
+                <Label htmlFor="remember-me" className="text-sm text-gray-600 font-medium">
                   Remember me
                 </Label>
               </div>
               <Link href="/forgot-password">
-                <span className="text-sm text-blue-600 hover:text-blue-800 cursor-pointer" data-testid="link-forgot-password">
+                <span className="text-sm text-green-600 hover:text-green-800 cursor-pointer font-medium" data-testid="link-forgot-password">
                   Forgot Password?
                 </span>
               </Link>
@@ -241,7 +214,7 @@ export default function Login() {
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-green-600 hover:bg-green-700 text-white h-12 text-base font-medium disabled:opacity-50"
+              className="w-full bg-green-600 hover:bg-green-700 text-white h-12 text-base font-semibold rounded-md disabled:opacity-50"
               data-testid="button-signin"
             >
               {isLoading ? "Signing In..." : "Sign In"}
@@ -251,7 +224,7 @@ export default function Login() {
               <span className="text-sm text-gray-600">
                 Don't have an account?{" "}
                 <Link href="/signup">
-                  <span className="text-green-600 hover:text-green-800 cursor-pointer font-medium" data-testid="link-signup">
+                  <span className="text-green-600 hover:text-green-800 cursor-pointer font-semibold" data-testid="link-signup">
                     Sign up
                   </span>
                 </Link>

@@ -137,7 +137,7 @@ export default function GlobalSearch({ className }: GlobalSearchProps) {
             setIsOpen(true);
           }}
           onFocus={() => setIsOpen(true)}
-          className="pl-10 pr-4 py-7 w-[640px]  bg-gray-200 dark:bg-[#161717] rounded-full text-slate-900 dark:text-slate-100"
+          className="pl-10 pr-4  w-[500px]  bg-gray-200 dark:bg-[#161717] rounded-full text-slate-900 dark:text-slate-100"
         />
       <Search className="absolute py-2px left-3 top-1/2 transform -translate-y-1/2 w-6 h-6 text-slate-400 dark:text-slate-500" />
       </div>
