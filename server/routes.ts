@@ -90,12 +90,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Employee routes
+  // Employee routes - proxy to Django backend
   app.get("/api/employees", async (req, res) => {
     try {
-      const employees = await storage.getEmployees();
-      res.json(employees);
+      // First check if user is authenticated in Express session
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      // Proxy request to Django backend (direct localhost connection)
+      const djangoResponse = await fetch("http://127.0.0.1:8000/api/users-list/", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        }
+      });
+      
+      if (!djangoResponse.ok) {
+        return res.status(500).json({ message: "Failed to fetch employees from Django backend" });
+      }
+      
+      const djangoData = await djangoResponse.json();
+      
+      // Transform Django response to match expected format
+      if (djangoData.success && djangoData.users) {
+        const employees = djangoData.users.map((user: any) => ({
+          id: user.id,
+          name: user.full_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username,
+          email: user.email,
+          department: user.department || '',
+          position: user.job_title || '',
+          emp_code: user.emp_code || '',
+          mobile: user.mobile || '',
+          is_active: user.is_active,
+          date_joined: user.date_joined
+        }));
+        res.json(employees);
+      } else {
+        res.status(500).json({ message: "Invalid response from Django backend" });
+      }
     } catch (error) {
+      console.error("Error proxying to Django backend:", error);
       res.status(500).json({ message: "Failed to fetch employees" });
     }
   });
