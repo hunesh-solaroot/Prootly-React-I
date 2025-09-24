@@ -60,10 +60,25 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
     return `${months} month${months !== 1 ? "s" : ""}`;
   };
 
-  return (
+  // Render specific tab content based on activeTab prop
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "attendance":
+        return renderAttendanceTab();
+      case "leave":
+        return renderLeaveTab();
+      case "documents":
+        return renderDocumentsTab();
+      case "performance":
+        return renderPerformanceTab();
+      default:
+        return renderOverviewTab();
+    }
+  };
+
+  const renderOverviewTab = () => (
     <div className="w-full space-y-6">
-      <Tabs value={activeTab} className="w-full">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
@@ -367,7 +382,6 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
             </CardContent>
           </Card>
         </TabsContent>
-        </div>
       </Tabs>
     </div>
   );

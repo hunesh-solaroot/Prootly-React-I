@@ -10,6 +10,8 @@ import { Download, Printer, X, MessageCircle, UserPlus, Camera, Edit, MapPin, Ca
 import ProfileTabsSimple from "@/components/profile/ProfileTabsSimple";
 import EditProfileModal from "@/components/profile/EditProfileModal";
 import GradeBadge from "@/components/profile/GradeBadge";
+import PunchInOutCard from "@/components/profile/PunchInOutCard";
+import AttendanceHistory from "@/components/profile/AttendanceHistory";
 import { EmployeeProfile, AttendanceData, LeaveRecord, Document, PerformanceData, ProjectInvolvement, WorkingHours, KPIData, Achievement, LeaveSummary } from "../../../shared/types";
 
 // Mock data - in real app this would come from API/database
@@ -988,6 +990,10 @@ export default function Profile() {
                   </TabsContent>
 
                   <TabsContent value="attendance" className="space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <PunchInOutCard employeeId={profileData.employeeId} />
+                      <AttendanceHistory employeeId={profileData.employeeId} />
+                    </div>
                     <ProfileTabsSimple
                       profile={profileData}
                       attendanceData={mockAttendanceData}

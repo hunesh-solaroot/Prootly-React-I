@@ -10,21 +10,24 @@ import {
   UserCheck,
   Settings,
   User,
+  Building,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ChevronDown, ChevronRight } from "lucide-react";
+} from "./ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
 
+// --- Navigation Items Configuration ---
 const navigationItems = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
   { path: "/employees", label: "Employees", icon: Users },
@@ -57,6 +60,22 @@ const navigationItems = [
     ],
   },
   { path: "/members", label: "Members", icon: UserCheck },
+  {
+    path: "/organisation",
+    label: "Organisation",
+    icon: Building,
+    hasDropdown: true,
+    dropdownItems: [
+      { path: "/organisation/dashboard", label: "Dashboard" },
+      { path: "/organisation/employee-management", label: "Employees" },
+      { path: "/organisation/attendance", label: "Attendance" },
+      { path: "/organisation/leave-management", label: "Leaves" },
+      { path: "/organisation/payroll", label: "Payroll" },
+      { path: "/organisation/departments", label: "Department & Role" },
+      { path: "/organisation/reports", label: "Reports & Analytics" },
+      { path: "/organisation/settings", label: "Settings" },
+    ],
+  },
   { path: "/profile", label: "Profile", icon: User },
   { path: "/settings", label: "Settings", icon: Settings },
 ];
@@ -64,7 +83,6 @@ const navigationItems = [
 export default function Sidebar() {
   const [location] = useLocation();
   const [isHovered, setIsHovered] = useState(false);
-
   const [openDropdowns, setOpenDropdowns] = useState<string[]>([]);
 
   const toggleDropdown = (path: string) => {
@@ -72,16 +90,19 @@ export default function Sidebar() {
       prev.includes(path) ? prev.filter((p) => p !== path) : [...prev, path],
     );
   };
+
   return (
     <div
-      className={`${isHovered ? "w-56" : "w-16"} bg-white dark:bg-[#2a2a2a] shadow-sm border-r border-slate-200 dark:border-[#3b3b3b] flex flex-col transition-all duration-300 ease-in-out overflow-hidden`}
+      className={`${
+        isHovered ? "w-56" : "w-16"
+      } bg-white dark:bg-[#2a2a2a] shadow-sm border-r border-slate-200 dark:border-[#3b3b3b] flex flex-col transition-all duration-300 ease-in-out overflow-hidden`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Header with Logo */}
-      <div className="flex items-center p-3 pt-4  border-slate-200 dark:border-gray-700">
+      <div className="flex items-center p-3 pt-4 border-slate-200 dark:border-gray-700">
         <div className="flex items-center gap-1 min-w-0">
-          <div className="w-11 h-11  rounded-lg flex items-center justify-center flex-shrink-0">
+          <div className="w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0">
             <svg
               className="w-11 h-11 text-white"
               fill="currentColor"
@@ -109,135 +130,135 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-2 pt-6 space-y-1">
-        {navigationItems.map((item) => {
-          const isActive =
-            location === item.path ||
-            (item.hasDropdown &&
-              item.dropdownItems?.some((subItem) => location === subItem.path));
-          const Icon = item.icon;
-          const isDropdownOpen = openDropdowns.includes(item.path);
+      <TooltipProvider>
+        {/* --- MODIFIED LINE BELOW --- */}
+        <nav className="flex-1 p-2 pt-6 space-y-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {navigationItems.map((item) => {
+            const isActive =
+              location === item.path ||
+              (item.hasDropdown &&
+                item.dropdownItems?.some(
+                  (subItem) => location === subItem.path,
+                ));
+            const Icon = item.icon;
+            const isDropdownOpen = openDropdowns.includes(item.path);
 
-          // Agar dropdown nahi hai to simple nav item render karo
-          if (!item.hasDropdown) {
-            const navItem = (
-              <Link key={item.path} href={item.path}>
+            if (!item.hasDropdown) {
+              const navItem = (
+                <Link key={item.path} href={item.path}>
+                  <div
+                    className={`flex items-center gap-3 px-3 py-3 pl-6 rounded-lg font-medium transition-all duration-200 cursor-pointer min-w-0 ${
+                      isActive
+                        ? "text-[#00a15d] bg-[rgba(0,161,93,0.1)] shadow-lg"
+                        : "text-slate-600 dark:text-slate-400 hover:text-[#00a15d] dark:hover:text-gray-50 hover:bg-[rgba(0,161,93,0.1)] dark:hover:bg-[rgba(0,161,93,0.1)]"
+                    } ${!isHovered ? "justify-center" : ""}`}
+                  >
+                    <Icon className="w-5 h-5 flex-shrink-0" />
+                    <span
+                      className={`transition-all duration-300 whitespace-nowrap ${
+                        isHovered ? "opacity-100 w-auto" : "opacity-0 w-0"
+                      }`}
+                    >
+                      {item.label}
+                    </span>
+                  </div>
+                </Link>
+              );
+
+              if (!isHovered) {
+                return (
+                  <Tooltip key={item.path}>
+                    <TooltipTrigger asChild>{navItem}</TooltipTrigger>
+                    <TooltipContent
+                      side="right"
+                      className="bg-gray-900 text-white"
+                    >
+                      {item.label}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              }
+              return navItem;
+            }
+
+            if (!isHovered) {
+              return (
+                <DropdownMenu key={item.path}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuTrigger asChild>
+                        <div
+                          className={`flex items-center gap-3 px-3 py-3 rounded-lg font-medium transition-all duration-200 cursor-pointer min-w-0 justify-center ${
+                            isActive
+                              ? "text-[#00a15d] bg-[rgba(0,161,93,0.1)] shadow-lg"
+                              : "text-slate-600 dark:text-slate-400 hover:text-[#00a15d] dark:hover:text-gray-50 hover:bg-[rgba(0,161,93,0.1)] dark:hover:bg-[rgba(0,161,93,0.1)]"
+                          }`}
+                        >
+                          <Icon className="w-5 h-5 flex-shrink-0" />
+                        </div>
+                      </DropdownMenuTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="right"
+                      className="bg-gray-900 text-white"
+                    >
+                      {item.label}
+                    </TooltipContent>
+                  </Tooltip>
+                  <DropdownMenuContent side="right" className="ml-2">
+                    {item.dropdownItems?.map((subItem) => (
+                      <DropdownMenuItem key={subItem.path} asChild>
+                        <Link href={subItem.path}>
+                          <span className="w-full">{subItem.label}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              );
+            }
+
+            return (
+              <div key={item.path}>
                 <div
                   className={`flex items-center gap-3 px-3 py-3 pl-6 rounded-lg font-medium transition-all duration-200 cursor-pointer min-w-0 ${
                     isActive
                       ? "text-[#00a15d] bg-[rgba(0,161,93,0.1)] shadow-lg"
                       : "text-slate-600 dark:text-slate-400 hover:text-[#00a15d] dark:hover:text-gray-50 hover:bg-[rgba(0,161,93,0.1)] dark:hover:bg-[rgba(0,161,93,0.1)]"
-                  } ${!isHovered ? "justify-center" : ""}`}
+                  }`}
+                  onClick={() => toggleDropdown(item.path)}
                 >
                   <Icon className="w-5 h-5 flex-shrink-0" />
-                  <span
-                    className={`transition-all duration-300 whitespace-nowrap ${
-                      isHovered ? "opacity-100 w-auto" : "opacity-0 w-0"
-                    }`}
-                  >
-                    {item.label}
-                  </span>
+                  <span className="flex-1">{item.label}</span>
+                  {isDropdownOpen ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
                 </div>
-              </Link>
-            );
 
-            if (!isHovered) {
-              return (
-                <Tooltip key={item.path}>
-                  <TooltipTrigger asChild>{navItem}</TooltipTrigger>
-                  <TooltipContent
-                    side="right"
-                    className="bg-gray-900 text-white"
-                  >
-                    {item.label}
-                  </TooltipContent>
-                </Tooltip>
-              );
-            }
-            return navItem;
-          }
-
-          // Dropdown wale items ke liye
-          if (!isHovered) {
-            // Collapsed state mein dropdown
-            return (
-              <DropdownMenu key={item.path}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <DropdownMenuTrigger asChild>
-                      <div
-                        className={`flex items-center gap-3 px-3 py-3 rounded-lg font-medium transition-all duration-200 cursor-pointer min-w-0 justify-center ${
-                          isActive
-                            ? "text-[#00a15d] bg-[rgba(0,161,93,0.1)] shadow-lg"
-                            : "text-slate-600 dark:text-slate-400 hover:text-[#00a15d] dark:hover:text-gray-50 hover:bg-[rgba(0,161,93,0.1)] dark:hover:bg-[rgba(0,161,93,0.1)]"
-                        }`}
-                      >
-                        <Icon className="w-5 h-5 flex-shrink-0" />
-                      </div>
-                    </DropdownMenuTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent
-                    side="right"
-                    className="bg-gray-900 text-white"
-                  >
-                    {item.label}
-                  </TooltipContent>
-                </Tooltip>
-                <DropdownMenuContent side="right" className="ml-2">
-                  {item.dropdownItems?.map((subItem) => (
-                    <DropdownMenuItem key={subItem.path} asChild>
-                      <Link href={subItem.path}>
-                        <span className="w-full">{subItem.label}</span>
+                {isDropdownOpen && (
+                  <div className="ml-6 mt-1 space-y-1">
+                    {item.dropdownItems?.map((subItem) => (
+                      <Link key={subItem.path} href={subItem.path}>
+                        <div
+                          className={`flex items-center gap-3 px-3 py-2 pl-8 rounded-lg text-sm transition-all duration-200 cursor-pointer ${
+                            location === subItem.path
+                              ? "text-[#00a15d] bg-[rgba(0,161,93,0.1)]"
+                              : "text-slate-500 dark:text-slate-400 hover:text-[#00a15d] hover:bg-[rgba(0,161,93,0.1)]"
+                          }`}
+                        >
+                          {subItem.label}
+                        </div>
                       </Link>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            );
-          }
-
-          // Expanded state mein dropdown
-          return (
-            <div key={item.path}>
-              <div
-                className={`flex items-center gap-3 px-3 py-3 pl-6 rounded-lg font-medium transition-all duration-200 cursor-pointer min-w-0 ${
-                  isActive
-                    ? "text-[#00a15d] bg-[rgba(0,161,93,0.1)] shadow-lg"
-                    : "text-slate-600 dark:text-slate-400 hover:text-[#00a15d] dark:hover:text-gray-50 hover:bg-[rgba(0,161,93,0.1)] dark:hover:bg-[rgba(0,161,93,0.1)]"
-                }`}
-                onClick={() => toggleDropdown(item.path)}
-              >
-                <Icon className="w-5 h-5 flex-shrink-0" />
-                <span className="flex-1">{item.label}</span>
-                {isDropdownOpen ? (
-                  <ChevronDown className="w-4 h-4" />
-                ) : (
-                  <ChevronRight className="w-4 h-4" />
+                    ))}
+                  </div>
                 )}
               </div>
-
-              {/* Dropdown Items */}
-              {isDropdownOpen && (
-                <div className="ml-6 mt-1 space-y-1">
-                  {item.dropdownItems?.map((subItem) => (
-                    <Link key={subItem.path} href={subItem.path}>
-                      <div
-                        className={`flex items-center gap-3 px-3 py-2 pl-8 rounded-lg text-sm transition-all duration-200 cursor-pointer ${
-                          location === subItem.path
-                            ? "text-[#00a15d] bg-[rgba(0,161,93,0.1)]"
-                            : "text-slate-500 dark:text-slate-400 hover:text-[#00a15d] hover:bg-[rgba(0,161,93,0.1)]"
-                        }`}
-                      >
-                        {subItem.label}
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </nav>
+            );
+          })}
+        </nav>
+      </TooltipProvider>
     </div>
   );
 }
